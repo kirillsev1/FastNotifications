@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  web:
+    container_name: web
+    build:
+      dockerfile: docker/web/Dockerfile
+      context: .
+    ports:
+      - "8000:8000"
+    command: scripts/web/startup.sh -m -l
+    restart: on-failure
+    env_file:
+      - ./src/conf/.env
+    volumes:
+      - .:/code
+    depends_on:
+      web_db:
+        condition: service_healthy
+    networks:
+      - fast_calendar
+  web_db:
+    container_name: web_db
+    image: library/postgres:13.2
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=main_db
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres", "-d", "main_db" ]
+      interval: 5s
+      retries: 5
+    volumes:
+      - ./scripts/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - fast_calendar
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - fast_calendar
+  worker:
+    build:
+      context: .
+      dockerfile: docker/celery/Dockerfile
+    command: ['celery', '-A', 'src.integrations.worker.celery.app', 'worker', '-l', 'info']
+    environment:
+      - BROKER_URL=redis://redis:6379
+      - RESULT_BACKEND=redis://redis:6379
+    volumes:
+      - ./src/:/code/src/
+    depends_on:
+      - redis
+    networks:
+      - fast_calendar
+
+  flower:
+    image: mher/flower:0.9.7
+    command: ['flower', '--broker=redis://redis:6379/', '--port=5555']
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    networks:
+      - fast_calendar
+
+networks:
+  fast_calendar:
+    external: True
