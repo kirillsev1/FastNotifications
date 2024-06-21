@@ -1,1 +1,1 @@
-from . import create, utc, delete, patch, put, read
+from . import create, update, read

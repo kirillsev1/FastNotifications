@@ -10,8 +10,8 @@ origins = [
 def add_cors(app: FastAPI) -> None:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=['*'],
         allow_credentials=True,
-        allow_methods=['GET', 'PUT', 'POST', 'DELETE'],
-        allow_headers=['Accept', 'Accept-Language', 'Content-Language', 'Content-Type', 'X-MBX-APIKEY', 'Access-Token'],
+        allow_methods=['*'],
+        allow_headers=['*'],
     )

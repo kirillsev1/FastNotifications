@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
-import pytz
-from sqlalchemy import BigInteger, String, Integer, TypeDecorator
+from sqlalchemy import BigInteger, String, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.meta import Base

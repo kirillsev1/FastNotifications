@@ -24,7 +24,7 @@ async def create(
     if note_data['send_required']:
         try:
             await schedule_notifications(access_token['chat_id'], note)
-        except Exception as error:
+        except Exception:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     return note
 
