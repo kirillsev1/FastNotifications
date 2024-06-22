@@ -8,7 +8,6 @@ from src.integrations.worker.tasks import schedule_notifications
 from src.schema.models.note import NoteReq, NoteResp
 from src.utils.auth.jwt import JwtTokenT, jwt_auth
 from src.utils.crud.note import create_note
-from src.utils.crud.user import get_user_utc
 
 
 @note_router.post('', status_code=status.HTTP_201_CREATED, response_model=NoteResp)

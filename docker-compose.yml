@@ -52,7 +52,7 @@ services:
       - BROKER_URL=redis://redis:6379
       - RESULT_BACKEND=redis://redis:6379
     volumes:
-      - ./src/:/code/src/
+      - ./src/:/code
     depends_on:
       - redis
     networks:

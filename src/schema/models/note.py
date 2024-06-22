@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class NoteReq(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     perform: datetime
 
     content: str

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -7,6 +5,7 @@ from starlette.responses import Response
 
 from src.api.v1.note.router import note_router
 from src.integrations.postgres import get_session
+from src.integrations.redis.cache import redis_drop_key
 from src.utils.auth.jwt import JwtTokenT, jwt_auth
 from src.utils.crud.note import get_note, patch_note
 
@@ -17,8 +16,9 @@ from src.utils.crud.note import get_note, patch_note
     dependencies=[Depends(jwt_auth.validate_token)],
 )
 async def path_note_content(
-    content: str,
     note_id: int,
+    content: str,
+    page: int,
     access_token: JwtTokenT = Depends(jwt_auth.validate_token),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
@@ -27,4 +27,7 @@ async def path_note_content(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     await patch_note(session, note, 'content', content)
+
+    await redis_drop_key(str(access_token['user_id']), page)
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)

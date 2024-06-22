@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,9 +19,15 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_PASSWORD: str
     REDIS_CACHE_PREFIX: str
+    EXPIRE_TIME: timedelta = timedelta(minutes=15)
+
     CELERY_BROKER_URL: str
+
     PAGE_LIMIT: int
 
     BOT_TOKEN: str
+
+    LOG_LEVEL: str
+
 
 settings = Settings()

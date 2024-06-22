@@ -5,6 +5,7 @@ from starlette.responses import Response
 
 from src.api.v1.note.router import note_router
 from src.integrations.postgres import get_session
+from src.integrations.redis.cache import redis_drop_key
 from src.integrations.worker.tasks import revoke_notifications, schedule_notifications
 from src.utils.auth.jwt import JwtTokenT, jwt_auth
 from src.utils.crud.note import get_note, patch_note
@@ -16,8 +17,9 @@ from src.utils.crud.note import get_note, patch_note
     dependencies=[Depends(jwt_auth.validate_token)],
 )
 async def path_note_send_required(
-    send_required: bool,
     note_id: int,
+    send_required: bool,
+    page: int,
     access_token: JwtTokenT = Depends(jwt_auth.validate_token),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
@@ -31,4 +33,7 @@ async def path_note_send_required(
         await schedule_notifications(note_id, note)
 
     await patch_note(session, note, 'send_required', send_required)
+
+    await redis_drop_key(str(access_token['user_id']), page)
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)

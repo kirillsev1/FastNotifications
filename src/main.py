@@ -6,7 +6,10 @@ from fastapi import FastAPI
 from src.api.v1.auth.router import auth_router
 from src.api.v1.note.router import note_router
 from src.api.v1.user.router import user_router
-from src.on_startup.cors import add_cors
+from src.middleware.cors import add_cors
+from src.middleware.logger import LogServerMiddleware
+from src.on_startup.logger import setup_logger
+from src.on_startup.redis import start_redis
 
 
 def setup_routers(app: FastAPI) -> None:
@@ -20,15 +23,15 @@ def setup_routers(app: FastAPI) -> None:
 
 
 def setup_middleware(app: FastAPI) -> None:
-    # app.add_middleware(
-    #     LogServerMiddleware,
-    # )
-
-    ...
+    app.add_middleware(
+        LogServerMiddleware,
+    )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    setup_logger()
+    await start_redis()
 
     yield
 

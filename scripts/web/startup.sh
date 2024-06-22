@@ -9,4 +9,4 @@ python scripts/migrate.py
 python scripts/load_data.py fixture/calendar/calendar.user.json
 
 
-exec uvicorn src.main:create_app --host=$BIND_IP --port=$BIND_PORT
+exec uvicorn src.main:create_app --host=$BIND_IP --port=$BIND_PORT --reload
