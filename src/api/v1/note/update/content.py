@@ -18,7 +18,7 @@ from src.utils.crud.note import get_note, patch_note
 async def path_note_content(
     note_id: int,
     content: str,
-    page: int,
+    offset: int,
     access_token: JwtTokenT = Depends(jwt_auth.validate_token),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
@@ -28,6 +28,6 @@ async def path_note_content(
 
     await patch_note(session, note, 'content', content)
 
-    await redis_drop_key(str(access_token['user_id']), page)
+    await redis_drop_key(str(access_token['user_id']), str(note.perform.date()) + str(offset))
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

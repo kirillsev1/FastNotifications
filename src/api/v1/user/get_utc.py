@@ -5,7 +5,7 @@ from starlette.responses import JSONResponse
 
 from src.api.v1.user.router import user_router
 from src.integrations.postgres import get_session
-from src.integrations.redis.cache import redis_set, redis_get
+from src.integrations.redis.cache import redis_get, redis_set
 from src.utils.auth.jwt import JwtTokenT, jwt_auth
 from src.utils.crud.user import get_user_utc
 
@@ -16,8 +16,8 @@ from src.utils.crud.user import get_user_utc
     dependencies=[Depends(jwt_auth.validate_token)],
 )
 async def get_utc(
-        access_token: JwtTokenT = Depends(jwt_auth.validate_token),
-        session: AsyncSession = Depends(get_session),
+    access_token: JwtTokenT = Depends(jwt_auth.validate_token),
+    session: AsyncSession = Depends(get_session),
 ) -> JSONResponse:
     result = await redis_get('utc', access_token['user_id'])
     if result:
@@ -26,4 +26,3 @@ async def get_utc(
     utc = {'utc': await get_user_utc(session, access_token['user_id'])}
     await redis_set('utc', access_token['user_id'], utc)
     return JSONResponse(content=utc)
-

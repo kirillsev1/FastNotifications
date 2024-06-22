@@ -14,9 +14,9 @@ class LogServerMiddleware:
             await self.app(scope, receive, send)
             return
 
-        for header, value in scope["headers"]:
+        for header, header_data in scope['headers']:
             if header == b'x-correlation-id':
-                correlation_id_ctx.set(value.decode())
+                correlation_id_ctx.set(header_data.decode())
                 break
         else:
             correlation_id_ctx.set(uuid.uuid4().hex)

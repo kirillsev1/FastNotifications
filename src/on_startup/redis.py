@@ -1,6 +1,5 @@
 from redis.asyncio import ConnectionPool, Redis
 
-
 from src.conf.config import settings
 from src.integrations.redis import redis
 

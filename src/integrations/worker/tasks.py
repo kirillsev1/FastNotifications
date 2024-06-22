@@ -1,12 +1,14 @@
 from asyncio import new_event_loop, set_event_loop
 from datetime import datetime, timedelta, timezone
 
-import pytz
+import pytz  # type: ignore
 from aiogram import Bot
+from celery import Task  # type: ignore
 
 from src.conf.config import settings
 from src.integrations.postgres import get_session
 from src.integrations.worker.celery import app
+from src.metrics import async_integrations_timer
 from src.models.calendar.note import Note
 from src.utils.crud.note import get_note
 
@@ -21,6 +23,7 @@ plan = [
 ]
 
 
+@async_integrations_timer
 async def main(chat_id: int, user_id: int, note_id: int) -> None:
     async for session in get_session():
         note = await get_note(session, user_id, note_id)
@@ -29,30 +32,37 @@ async def main(chat_id: int, user_id: int, note_id: int) -> None:
 
 
 @app.task(
+    name='tasks.send',
     bind=True,
     autoretry_for=(Exception,),
     retry_backoff=True,
-    retry_kwargs={'max_retries': 5}
+    retry_kwargs={'max_retries': 5},
 )
-def send_notification_task(_, chat_id: int, user_id: int, note_id: int) -> bool:
+def send_notification_task(_: Task, chat_id: int, user_id: int, note_id: int) -> bool:
     loop.run_until_complete(main(chat_id, user_id, note_id))
     return True
 
 
+@async_integrations_timer
 async def schedule_notifications(chat_id: int, note: Note) -> None:
     eta = note.perform.astimezone(pytz.UTC)
     for schedule_time in plan:
         delta = timedelta(**schedule_time)
         if datetime.now(timezone.utc) + delta < eta:
             task_id = f'note:plan:{note.id}:{int(delta.total_seconds())}'
-            send_notification_task.apply_async(args=(chat_id, note.user_id, note.id), eta=eta - delta, task_id=task_id)
+            send_notification_task.apply_async(
+                args=(chat_id, note.user_id, note.id),
+                eta=eta - delta,
+                task_id=task_id,
+                expires=100,
+            )
 
 
+@async_integrations_timer
 async def revoke_notifications(note_id: int) -> None:
     from src.integrations.worker.celery import app
 
     for schedule_time in plan:
         delta = timedelta(**schedule_time)
         task_id = f'note:plan:{note_id}:{int(delta.total_seconds())}'
-        print(task_id)
-        print(app.control.revoke(task_id, terminate=True))
+        app.control.revoke(task_id, terminate=True)

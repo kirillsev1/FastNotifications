@@ -1,3 +1,5 @@
+from math import ceil
+
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -8,7 +10,7 @@ from src.integrations.postgres import get_session
 from src.integrations.redis.cache import redis_drop_key
 from src.integrations.worker.tasks import revoke_notifications, schedule_notifications
 from src.utils.auth.jwt import JwtTokenT, jwt_auth
-from src.utils.crud.note import get_note, patch_note
+from src.utils.crud.note import get_note, get_notes_total_rows, patch_note
 
 
 @note_router.patch(
@@ -34,6 +36,8 @@ async def path_note_send_required(
 
     await patch_note(session, note, 'send_required', send_required)
 
-    await redis_drop_key(str(access_token['user_id']), page)
+    offset = ceil((await get_notes_total_rows(session, access_token['user_id'], note.perform.date()) - 1) // 10) * 10
+
+    await redis_drop_key(str(access_token['user_id']), str(note.perform.date()) + str(offset))
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

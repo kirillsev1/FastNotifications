@@ -47,12 +47,12 @@ services:
     build:
       context: .
       dockerfile: docker/celery/Dockerfile
-    command: ['celery', '-A', 'src.integrations.worker.celery.app', 'worker', '-l', 'info']
+    command: ['celery', '-A', 'integrations.worker.celery.app', 'worker', '-l', 'info']
     environment:
       - BROKER_URL=redis://redis:6379
       - RESULT_BACKEND=redis://redis:6379
     volumes:
-      - ./src/:/code
+      - ./:/code
     depends_on:
       - redis
     networks:
@@ -67,6 +67,38 @@ services:
       - redis
     networks:
       - fast_calendar
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus_config.yml"
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    depends_on:
+      - web
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+    networks:
+      - fast_calendar
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    build:
+      context: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - web
+    networks:
+      - fast_calendar
+
+volumes:
+  prom_data:
 
 networks:
   fast_calendar:

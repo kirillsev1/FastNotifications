@@ -6,8 +6,10 @@ from fastapi import FastAPI
 from src.api.v1.auth.router import auth_router
 from src.api.v1.note.router import note_router
 from src.api.v1.user.router import user_router
+from src.metrics import metrics
 from src.middleware.cors import add_cors
 from src.middleware.logger import LogServerMiddleware
+from src.middleware.metrics import prometheus_metrics
 from src.on_startup.logger import setup_logger
 from src.on_startup.redis import start_redis
 
@@ -26,16 +28,16 @@ def setup_middleware(app: FastAPI) -> None:
     app.add_middleware(
         LogServerMiddleware,
     )
+    app.middleware('http')(prometheus_metrics)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.add_route('/metrics', metrics)
     setup_logger()
     await start_redis()
 
     yield
-
-    return
 
 
 def create_app() -> FastAPI:

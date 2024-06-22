@@ -57,6 +57,7 @@ starlette-context = "0.3.6"
 miniopy-async = "1.17"
 celery = "^5.4.0"
 pytz = "^2024.1"
+types-python-jose = "3.3.4.8"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "2.2.0"

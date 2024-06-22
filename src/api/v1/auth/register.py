@@ -17,6 +17,6 @@ async def create(
     user_data = body.model_dump()
     try:
         user = await create_user(session, user_data)
-    except IntegrityError as error:
+    except IntegrityError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     return user
