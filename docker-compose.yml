@@ -1,6 +1,18 @@
 version: '3.9'
 
 services:
+  nginx:
+    build:
+      dockerfile: docker/nginx/Dockerfile
+      context: .
+    ports:
+      - "81:80"
+      - "443:443"
+    depends_on:
+      - web
+    networks:
+      - fast_calendar
+
   web:
     container_name: web
     build:
@@ -47,7 +59,7 @@ services:
     build:
       context: .
       dockerfile: docker/celery/Dockerfile
-    command: ['celery', '-A', 'integrations.worker.celery.app', 'worker', '-l', 'info']
+    command: ['celery', '-A', 'src.integrations.worker.celery.app', 'worker', '-l', 'info']
     environment:
       - BROKER_URL=redis://redis:6379
       - RESULT_BACKEND=redis://redis:6379
